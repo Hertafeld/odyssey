@@ -42,3 +42,19 @@ CREATE INDEX IF NOT EXISTS idx_votes_story_id ON votes(story_id);
 -- ALTER TABLE users ENABLE ROW LEVEL SECURITY;
 -- ALTER TABLE stories ENABLE ROW LEVEL SECURITY;
 -- ALTER TABLE votes ENABLE ROW LEVEL SECURITY;
+
+-- Random unseen story for a user (used by Fetch endpoint)
+CREATE OR REPLACE FUNCTION get_random_unseen_story(p_user_id UUID)
+RETURNS TABLE (id UUID, text TEXT, story_name TEXT)
+LANGUAGE sql
+STABLE
+AS $$
+  SELECT s.id, s.text, s.story_name
+  FROM stories s
+  WHERE NOT EXISTS (
+    SELECT 1 FROM votes v
+    WHERE v.story_id = s.id AND v.user_id = p_user_id
+  )
+  ORDER BY RANDOM()
+  LIMIT 1;
+$$;

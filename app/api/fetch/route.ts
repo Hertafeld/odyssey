@@ -1,27 +1,41 @@
 import { NextResponse } from 'next/server';
-
-const HARDCODED_STORIES = [
-  { storyId: 'hc-1', text: 'He brought his mom to our first date. She ordered for him.', storyName: 'MommasBoy_Run' },
-  { storyId: 'hc-2', text: 'She spent 20 minutes explaining why the earth is flat. We were at a planetarium.', storyName: 'ScienceGuy' },
-  { storyId: 'hc-3', text: 'He forgot his wallet, so I paid. Then he asked for the receipt to expense it.', storyName: 'CorporateGreed' },
-  { storyId: 'hc-4', text: 'She Googled my name during dinner and read my LinkedIn out loud.', storyName: 'RecruiterVibes' },
-  { storyId: 'hc-5', text: 'He said his ex was "crazy" and then his ex showed up. She was not crazy.', storyName: 'RedFlagCentral' },
-];
+import { getSupabaseServer } from '@/lib/supabase-server';
 
 export async function POST(request: Request) {
   try {
     const body = await request.json();
     const { userId } = body as { userId?: string };
 
-    // TODO: replace with DB – pick random unseen story for user
-    void userId;
+    if (!userId || typeof userId !== 'string') {
+      return NextResponse.json(
+        { success: false, error: 'user_id_required' },
+        { status: 400 }
+      );
+    }
 
-    const story = HARDCODED_STORIES[Math.floor(Math.random() * HARDCODED_STORIES.length)];
+    const supabase = getSupabaseServer();
+    const { data, error } = await supabase.rpc('get_random_unseen_story', {
+      p_user_id: userId,
+    });
+
+    if (error) throw error;
+
+    const row = Array.isArray(data) ? data[0] : null;
+    if (!row) {
+      return NextResponse.json({
+        success: true,
+        hasStory: false,
+      });
+    }
 
     return NextResponse.json({
       success: true,
       hasStory: true,
-      story,
+      story: {
+        storyId: row.id,
+        text: row.text,
+        storyName: row.story_name ?? undefined,
+      },
     });
   } catch {
     return NextResponse.json(
