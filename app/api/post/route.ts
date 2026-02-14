@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getSupabaseServer } from '@/lib/supabase-server';
 
-const MAX_TEXT_LENGTH = 300;
+const MAX_TEXT_LENGTH = 3000;
 
 export async function POST(request: Request) {
   try {

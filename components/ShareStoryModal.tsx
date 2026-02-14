@@ -3,85 +3,212 @@
 import { useState } from 'react';
 import { X } from 'lucide-react';
 
-interface ShareStoryModalProps {
+export interface ShareStoryModalProps {
   isOpen: boolean;
   onClose: () => void;
+  userId: string | null;
+  isTempAccount: boolean;
+  userEmail: string | null;
+  cookieId: string;
+  onLoginSuccess: (params: { userId: string; isTempAccount: boolean; userEmail?: string | null }) => void;
+  onSignOut: () => void;
 }
 
-export default function ShareStoryModal({ isOpen, onClose }: ShareStoryModalProps) {
-  // MOCK STATE: Change this to 'true' to see the submission form, 'false' to see login
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
+export default function ShareStoryModal({
+  isOpen,
+  onClose,
+  userId,
+  isTempAccount,
+  userEmail,
+  cookieId,
+  onLoginSuccess,
+  onSignOut,
+}: ShareStoryModalProps) {
   const [authMode, setAuthMode] = useState<'signin' | 'signup'>('signin');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [authError, setAuthError] = useState<string | null>(null);
+  const [authLoading, setAuthLoading] = useState(false);
+  const [storyText, setStoryText] = useState('');
+  const [storyNickname, setStoryNickname] = useState('');
+  const [storySubmitLoading, setStorySubmitLoading] = useState(false);
+  const [storyError, setStoryError] = useState<string | null>(null);
+  const [storySuccess, setStorySuccess] = useState(false);
+
+  const handleAuthSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setAuthError(null);
+    setAuthLoading(true);
+    try {
+      if (authMode === 'signin') {
+        const res = await fetch('/api/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: email.trim(), password }),
+        });
+        const data = await res.json();
+        if (!data.success) {
+          setAuthError(data.error === 'invalid_credentials' ? 'Invalid email or password.' : data.error ?? 'Login failed.');
+          return;
+        }
+        onLoginSuccess({ userId: data.userId, isTempAccount: data.isTempAccount ?? false, userEmail: email.trim() });
+      } else {
+        const res = await fetch('/api/create-account', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: email.trim(), password, cookieId: cookieId || undefined }),
+        });
+        const data = await res.json();
+        if (!data.success) {
+          setAuthError(data.error === 'email_taken' ? 'That email is already in use.' : data.error ?? 'Sign up failed.');
+          return;
+        }
+        onLoginSuccess({ userId: userId!, isTempAccount: false, userEmail: email.trim() });
+      }
+      setPassword('');
+      setEmail('');
+      setAuthError(null);
+      // Stay in modal; parent state update will hide auth form and show submit-story view
+    } finally {
+      setAuthLoading(false);
+    }
+  };
+
+  const handleSignOutClick = () => {
+    onSignOut();
+    onClose();
+  };
+
+  const handleStorySubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const text = storyText.trim();
+    if (!text) {
+      setStoryError('Please enter your story.');
+      return;
+    }
+    if (!userId) return;
+    setStoryError(null);
+    setStorySuccess(false);
+    setStorySubmitLoading(true);
+    try {
+      const res = await fetch('/api/post', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          text,
+          userId,
+          storyName: storyNickname.trim() || undefined,
+        }),
+      });
+      const data = await res.json();
+      if (!data.success) {
+        setStoryError(data.error === 'text_too_long' ? 'Story is too long (max 3000 characters).' : data.error ?? 'Something went wrong.');
+        return;
+      }
+      setStorySuccess(true);
+      setStoryText('');
+      setStoryNickname('');
+      // Optionally close after a short delay so they see success
+      setTimeout(() => { setStorySuccess(false); onClose(); }, 1500);
+    } finally {
+      setStorySubmitLoading(false);
+    }
+  };
 
   if (!isOpen) return null;
 
+  const showAuthForm = !!userId && isTempAccount;
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-      <div className="relative w-full max-w-md bg-white border-4 border-black shadow-[8px_8px_0px_0px_rgba(255,255,255,1)] p-6 md:p-8">
+      <div className="relative w-full max-w-md bg-white border-4 border-black shadow-[8px_8px_0px_0px_rgba(255,255,255,1)] p-6 md:p-8 max-h-[90vh] overflow-y-auto">
 
-        {/* Close Button */}
         <button
           onClick={onClose}
           className="absolute top-4 right-4 p-1 hover:bg-gray-100 border-2 border-transparent hover:border-black transition-all"
+          aria-label="Close"
         >
           <X size={24} />
         </button>
 
-        {/* --- VIEW 1: NOT LOGGED IN --- */}
-        {!isLoggedIn ? (
-          <div className="text-center">
+        {showAuthForm && (
+          <div className="text-center mb-6">
             <h2 className="text-2xl font-black uppercase mb-2">
               {authMode === 'signin' ? 'Welcome Back' : 'Join the Disaster'}
             </h2>
-            <p className="mb-6 font-medium text-gray-600">
-              You need an account to expose your worst dates.
+            <p className="mb-4 font-medium text-gray-600">
+              Create an account to save your progress, or sign in.
             </p>
 
-            <form className="space-y-4 text-left">
+            <form onSubmit={handleAuthSubmit} className="space-y-4 text-left">
               <div>
                 <label className="block font-bold text-xs uppercase mb-1">Email</label>
                 <input
                   type="email"
+                  value={email}
+                  onChange={(e) => { setEmail(e.target.value); setAuthError(null); }}
                   className="w-full p-3 border-4 border-black focus:outline-none focus:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all"
                   placeholder="name@example.com"
+                  required
                 />
               </div>
               <div>
                 <label className="block font-bold text-xs uppercase mb-1">Password</label>
                 <input
                   type="password"
+                  value={password}
+                  onChange={(e) => { setPassword(e.target.value); setAuthError(null); }}
                   className="w-full p-3 border-4 border-black focus:outline-none focus:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all"
                   placeholder="••••••••"
+                  required
                 />
               </div>
-
+              {authError && <p className="text-sm text-red-600 font-medium">{authError}</p>}
               <button
-                type="button"
-                onClick={() => setIsLoggedIn(true)} // Fake login for now
-                className="w-full py-3 bg-yellow-400 font-black uppercase border-4 border-black hover:translate-y-1 hover:shadow-none shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all"
+                type="submit"
+                disabled={authLoading}
+                className="w-full py-3 bg-yellow-400 font-black uppercase border-4 border-black hover:translate-y-1 hover:shadow-none shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all disabled:opacity-60"
               >
-                {authMode === 'signin' ? 'Log In' : 'Create Account'}
+                {authLoading ? '…' : authMode === 'signin' ? 'Log In' : 'Create Account'}
               </button>
             </form>
 
-            <div className="mt-6 text-sm font-bold">
+            <div className="mt-4 text-sm font-bold">
               {authMode === 'signin' ? (
-                <p>New here? <button onClick={() => setAuthMode('signup')} className="underline text-blue-600">Create an account</button></p>
+                <p>New here? <button type="button" onClick={() => { setAuthMode('signup'); setAuthError(null); }} className="underline text-blue-600">Create an account</button></p>
               ) : (
-                <p>Already have one? <button onClick={() => setAuthMode('signin')} className="underline text-blue-600">Log in</button></p>
+                <p>Already have one? <button type="button" onClick={() => { setAuthMode('signin'); setAuthError(null); }} className="underline text-blue-600">Log in</button></p>
               )}
             </div>
           </div>
-        ) : (
+        )}
 
-          /* --- VIEW 2: LOGGED IN (SUBMIT STORY) --- */
+        {/* Submit story (always show when we have a user) */}
+        {userId && (
           <div>
+            {!isTempAccount && (
+              <div className="flex items-center justify-between mb-4">
+                <p className="text-sm font-semibold text-gray-700">Signed in as {userEmail ?? 'you'}</p>
+                <button
+                  type="button"
+                  onClick={handleSignOutClick}
+                  className="text-sm font-bold underline text-gray-700 hover:text-black"
+                >
+                  Sign out
+                </button>
+              </div>
+            )}
             <h2 className="text-2xl font-black uppercase mb-4">Spill the Tea ☕️</h2>
-            <form className="space-y-4">
+            {storySuccess && (
+              <p className="mb-4 text-green-700 font-semibold">Your story was submitted. Thanks!</p>
+            )}
+            <form onSubmit={handleStorySubmit} className="space-y-4">
               <div>
                 <label className="block font-bold text-xs uppercase mb-1">Your Nickname</label>
                 <input
                   type="text"
+                  value={storyNickname}
+                  onChange={(e) => setStoryNickname(e.target.value)}
                   className="w-full p-3 border-4 border-black focus:outline-none focus:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all"
                   placeholder="Anonymous"
                 />
@@ -90,21 +217,28 @@ export default function ShareStoryModal({ isOpen, onClose }: ShareStoryModalProp
                 <label className="block font-bold text-xs uppercase mb-1">The Story</label>
                 <textarea
                   rows={5}
+                  value={storyText}
+                  onChange={(e) => setStoryText(e.target.value)}
                   className="w-full p-3 border-4 border-black focus:outline-none focus:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all resize-none"
                   placeholder="So we went to dinner and..."
-                ></textarea>
-                <p className="text-right text-xs font-bold mt-1 text-black">0/300</p>
+                  maxLength={3000}
+                />
+                <p className="text-right text-xs font-bold mt-1 text-black">{storyText.length}/3000</p>
               </div>
-
+              {storyError && <p className="text-sm text-red-600 font-medium">{storyError}</p>}
               <button
-                type="button" // Change to submit later
-                onClick={onClose}
-                className="w-full py-3 bg-red-500 text-white font-black uppercase border-4 border-black hover:translate-y-1 hover:shadow-none shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all"
+                type="submit"
+                disabled={storySubmitLoading}
+                className="w-full py-3 bg-red-500 text-white font-black uppercase border-4 border-black hover:translate-y-1 hover:shadow-none shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all disabled:opacity-60"
               >
-                Submit Story
+                {storySubmitLoading ? 'Submitting…' : 'Submit Story'}
               </button>
             </form>
           </div>
+        )}
+
+        {!userId && (
+          <p className="text-center text-gray-500">Loading…</p>
         )}
       </div>
     </div>

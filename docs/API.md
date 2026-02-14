@@ -88,7 +88,7 @@ Submit a new story for the current user.
 
 | Field | Type | Required | Notes |
 |-------|------|----------|--------|
-| `text` | string | Yes | Story content. Max 300 characters. |
+| `text` | string | Yes | Story content. Max 3000 characters. |
 | `userId` | string | Yes | From Login (or stored after login). |
 | `storyName` | string | No | Display name / nickname for the story (e.g. “Anonymous”). |
 
@@ -153,9 +153,10 @@ Get one random story the user hasn’t voted on yet (or signal that there are no
 
 **Request body:**
 
-| Field | Type | Required |
-|-------|------|----------|
-| `userId` | string | Yes |
+| Field | Type | Required | Notes |
+|-------|------|----------|--------|
+| `userId` | string | Yes | |
+| `excludeStoryIds` | string[] | No | Story IDs to exclude (e.g. current story when pre-fetching the next). Avoids returning the same story twice. |
 
 **Success response (200) – story available:**
 
@@ -190,7 +191,7 @@ Get one random story the user hasn’t voted on yet (or signal that there are no
 
 or `invalid_request`.
 
-**Usage:** When loading the next card (e.g. on initial load or after a vote). Send the stored `userId`. If `hasStory: true`, render `story.text` and `story.storyName` and keep `story.storyId` for the next Vote call. If `hasStory: false`, show the empty state.
+**Usage:** When loading the next card (e.g. on initial load or after a vote). Send the stored `userId`. Optionally send `excludeStoryIds: [currentStoryId]` when pre-fetching the next story so the API won’t return the same story. If `hasStory: true`, render `story.text` and `story.storyName` and keep `story.storyId` for the next Vote call. If `hasStory: false`, show the empty state.
 
 ---
 
@@ -202,7 +203,7 @@ or `invalid_request`.
 | Create account | POST | `{ email, password, cookieId? }` | `success` |
 | Post | POST | `{ text, userId, storyName? }` | `storyId` |
 | Vote | POST | `{ storyId, userId, vote }` | `success` |
-| Fetch | POST | `{ userId }` | `hasStory`, `story?` |
+| Fetch | POST | `{ userId, excludeStoryIds? }` | `hasStory`, `story?` |
 
 **Vote values:** `"sucks"` | `"ive_had_worse"` (lowercase, with underscore).
 

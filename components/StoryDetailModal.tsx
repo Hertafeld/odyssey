@@ -3,7 +3,7 @@
 import { X } from 'lucide-react';
 
 export interface StoryForModal {
-  id: number;
+  id: string | number;
   content: string;
   nickname: string;
 }

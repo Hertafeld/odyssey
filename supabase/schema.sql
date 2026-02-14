@@ -43,8 +43,9 @@ CREATE INDEX IF NOT EXISTS idx_votes_story_id ON votes(story_id);
 -- ALTER TABLE stories ENABLE ROW LEVEL SECURITY;
 -- ALTER TABLE votes ENABLE ROW LEVEL SECURITY;
 
--- Random unseen story for a user (used by Fetch endpoint)
-CREATE OR REPLACE FUNCTION get_random_unseen_story(p_user_id UUID)
+-- Random unseen story for a user (used by Fetch endpoint).
+-- p_exclude_ids: optional array of story IDs to exclude (e.g. current story when pre-fetching next).
+CREATE OR REPLACE FUNCTION get_random_unseen_story(p_user_id UUID, p_exclude_ids UUID[] DEFAULT '{}')
 RETURNS TABLE (id UUID, text TEXT, story_name TEXT)
 LANGUAGE sql
 STABLE
@@ -55,6 +56,7 @@ AS $$
     SELECT 1 FROM votes v
     WHERE v.story_id = s.id AND v.user_id = p_user_id
   )
+  AND NOT (s.id = ANY(COALESCE(p_exclude_ids, ARRAY[]::UUID[])))
   ORDER BY RANDOM()
   LIMIT 1;
 $$;
