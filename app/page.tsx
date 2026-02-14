@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
+import Image from 'next/image';
 import StoryCard from '@/components/StoryCard';
 import ShareStoryModal from '@/components/ShareStoryModal';
 import StoryDetailModal from '@/components/StoryDetailModal';
@@ -67,12 +68,13 @@ export default function Home() {
     setIsTempAccount(true);
     setUserEmail(null);
     setActiveStory(null);
-    const cookieId = getOrCreateCookieId();
-    if (cookieId) {
+    const newCid = getOrCreateCookieId();
+    setCookieId(newCid);
+    if (newCid) {
       fetch('/api/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ cookieId }),
+        body: JSON.stringify({ cookieId: newCid }),
       })
         .then((res) => res.json())
         .then((data) => {
@@ -163,21 +165,30 @@ export default function Home() {
         onSignOut={handleSignOut}
       />
 
-      <div className="flex flex-col items-center flex-1 z-10 p-4 pt-2">
-        <h1 className="text-4xl sm:text-6xl font-black text-black uppercase tracking-tighter text-center mt-2 mb-2 drop-shadow-sm">
-          I've Had Worse
-        </h1>
+      <div className="flex flex-col items-center flex-1 z-10 p-4 pt-0">
+        <div className="mt-0 mb-0 flex justify-center">
+          <Image
+            src="/ive-hard-worse-logo-transparent.png"
+            alt="I've Had Worse"
+            width={1000}
+            height={600}
+            className="h-32 w-auto object-contain sm:h-40 md:h-48"
+            priority
+          />
+        </div>
         <p className="text-lg sm:text-xl font-semibold text-black text-center mb-12 max-w-md">
-          Swipe through the worst dates humanity has to offer.
+          Swipe through the worst dates.
         </p>
 
-        {/* --- CARD AREA --- */}
-      <div className="relative w-full max-w-md min-h-[280px] max-h-[38vh] z-10 flex items-center justify-center my-4 flex-shrink-0">
-        {((authLoading || storyLoading) && !activeStory) ? (
-          <div className="text-center p-8 border-4 border-gray-300 rounded-xl bg-white w-full h-full flex flex-col items-center justify-center">
-            <p className="font-semibold text-gray-600">{authLoading ? 'Loading…' : 'Loading story…'}</p>
-          </div>
-        ) : activeStory ? (
+        {/* --- CARD AREA (with swipe labels on the sides) --- */}
+      <div className="w-full max-w-2xl flex items-center justify-center gap-3 sm:gap-6 my-4 flex-shrink-0 z-10">
+        {activeStory && (
+          <span className="text-red-600 font-black uppercase tracking-wider text-xs sm:text-sm flex-shrink-0 text-center w-14 sm:w-20 leading-tight">
+            I've Had Worse
+          </span>
+        )}
+      <div className="relative w-full max-w-md min-h-[280px] max-h-[38vh] flex items-center justify-center flex-shrink-0">
+        {activeStory ? (
           <StoryCard
             key={activeStory.id}
             story={activeStory}
@@ -187,7 +198,7 @@ export default function Home() {
         ) : (
           <div className="text-center p-8 border-4 border-gray-300 rounded-xl bg-white w-full h-full flex flex-col items-center justify-center">
             <h2 className="text-2xl font-bold uppercase mb-4">No more disasters!</h2>
-            <p className="text-sm text-gray-600 mb-4">You’ve seen everything. Check back later or share your own.</p>
+            <p className="text-sm text-black mb-4">You’ve seen everything. Check back later or share your own.</p>
             <button
               onClick={() => userId && fetchNextStory(userId)}
               disabled={!userId || storyLoading}
@@ -198,6 +209,36 @@ export default function Home() {
           </div>
         )}
       </div>
+        {activeStory && (
+          <span className="text-yellow-600 font-black uppercase tracking-wider text-xs sm:text-sm flex-shrink-0 text-center w-14 sm:w-20 leading-tight">
+            That's Bad
+          </span>
+        )}
+      </div>
+
+        {/* --- Vote buttons --- */}
+        {activeStory && (
+          <div className="flex gap-4 w-full max-w-md justify-center flex-shrink-0 mt-2">
+            <button
+              onClick={() => handleVote('left')}
+              className="group relative flex-1 max-w-[200px]"
+            >
+              <div className="absolute top-0 left-0 w-full h-full bg-black rounded-lg translate-x-1 translate-y-1" />
+              <div className="relative bg-white border-4 border-red-500 py-3 px-4 rounded-lg flex items-center justify-center font-black uppercase tracking-wider text-red-800 hover:bg-red-50 active:translate-x-1 active:translate-y-1 transition-all">
+                I've Had Worse
+              </div>
+            </button>
+            <button
+              onClick={() => handleVote('right')}
+              className="group relative flex-1 max-w-[200px]"
+            >
+              <div className="absolute top-0 left-0 w-full h-full bg-black rounded-lg translate-x-1 translate-y-1" />
+              <div className="relative bg-white border-4 border-yellow-500 py-3 px-4 rounded-lg flex items-center justify-center font-black uppercase tracking-wider text-yellow-800 hover:bg-yellow-50 active:translate-x-1 active:translate-y-1 transition-all">
+                That's Bad
+              </div>
+            </button>
+          </div>
+        )}
 
         {/* --- Share --- */}
         <div className="z-10 w-full max-w-md flex flex-col items-center gap-6 mb-8 mt-6 flex-shrink-0">
@@ -215,6 +256,36 @@ export default function Home() {
         </button>
         </div>
       </div>
+
+      {/* --- About Section --- */}
+      <section className="w-full bg-yellow-100 border-t border-yellow-200 z-10">
+        <div className="mx-auto max-w-2xl px-6 py-12 text-center">
+          <h2 className="text-2xl sm:text-3xl font-black uppercase tracking-tighter text-black mb-4">
+            What is I've Had Worse?
+          </h2>
+          <p className="text-base sm:text-lg text-gray-700 leading-relaxed mb-6">
+            We all have that one date story we can't believe actually happened.
+            <strong> I've Had Worse</strong> is the place to share yours — anonymously.
+            Read through real stories submitted by real people, swipe to vote, and
+            find out if the internet thinks your disaster was truly terrible or just
+            another Tuesday.
+          </p>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 text-left mt-8">
+            <div>
+              <h3 className="font-black uppercase text-black text-sm tracking-wider mb-1">Read</h3>
+              <p className="text-sm text-gray-600">Swipe through anonymous dating horror stories submitted by the community.</p>
+            </div>
+            <div>
+              <h3 className="font-black uppercase text-black text-sm tracking-wider mb-1">Vote</h3>
+              <p className="text-sm text-gray-600">Think it's not that bad? Hit <em>"I've Had Worse."</em> Truly awful? Smash <em>"That's Bad."</em></p>
+            </div>
+            <div>
+              <h3 className="font-black uppercase text-black text-sm tracking-wider mb-1">Share</h3>
+              <p className="text-sm text-gray-600">Submit your own story and see how it stacks up on the leaderboard.</p>
+            </div>
+          </div>
+        </div>
+      </section>
 
       <Footer />
 

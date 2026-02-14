@@ -121,7 +121,7 @@ export default function ShareStoryModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-      <div className="relative w-full max-w-md bg-white border-4 border-black shadow-[8px_8px_0px_0px_rgba(255,255,255,1)] p-6 md:p-8 max-h-[90vh] overflow-y-auto">
+      <div className="relative w-full max-w-md bg-white border-4 border-black shadow-[8px_8px_0px_0px_rgba(255,255,255,1)] p-6 md:p-8 max-h-[90vh] overflow-y-auto text-black">
 
         <button
           onClick={onClose}
@@ -133,32 +133,32 @@ export default function ShareStoryModal({
 
         {showAuthForm && (
           <div className="text-center mb-6">
-            <h2 className="text-2xl font-black uppercase mb-2">
+            <h2 className="text-2xl font-black uppercase mb-2 text-black">
               {authMode === 'signin' ? 'Welcome Back' : 'Join the Disaster'}
             </h2>
-            <p className="mb-4 font-medium text-gray-600">
+            <p className="mb-4 font-medium text-black">
               Create an account to save your progress, or sign in.
             </p>
 
             <form onSubmit={handleAuthSubmit} className="space-y-4 text-left">
               <div>
-                <label className="block font-bold text-xs uppercase mb-1">Email</label>
+                <label className="block font-bold text-xs uppercase mb-1 text-black">Email</label>
                 <input
                   type="email"
                   value={email}
                   onChange={(e) => { setEmail(e.target.value); setAuthError(null); }}
-                  className="w-full p-3 border-4 border-black focus:outline-none focus:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all"
+                  className="w-full p-3 border-4 border-black text-black placeholder:text-gray-500 focus:outline-none focus:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all"
                   placeholder="name@example.com"
                   required
                 />
               </div>
               <div>
-                <label className="block font-bold text-xs uppercase mb-1">Password</label>
+                <label className="block font-bold text-xs uppercase mb-1 text-black">Password</label>
                 <input
                   type="password"
                   value={password}
                   onChange={(e) => { setPassword(e.target.value); setAuthError(null); }}
-                  className="w-full p-3 border-4 border-black focus:outline-none focus:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all"
+                  className="w-full p-3 border-4 border-black text-black placeholder:text-gray-500 focus:outline-none focus:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all"
                   placeholder="••••••••"
                   required
                 />
@@ -167,17 +167,17 @@ export default function ShareStoryModal({
               <button
                 type="submit"
                 disabled={authLoading}
-                className="w-full py-3 bg-yellow-400 font-black uppercase border-4 border-black hover:translate-y-1 hover:shadow-none shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all disabled:opacity-60"
+                className="w-full py-3 bg-yellow-400 text-black font-black uppercase border-4 border-black hover:translate-y-1 hover:shadow-none shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all disabled:opacity-60"
               >
                 {authLoading ? '…' : authMode === 'signin' ? 'Log In' : 'Create Account'}
               </button>
             </form>
 
-            <div className="mt-4 text-sm font-bold">
+            <div className="mt-4 text-sm font-bold text-black">
               {authMode === 'signin' ? (
-                <p>New here? <button type="button" onClick={() => { setAuthMode('signup'); setAuthError(null); }} className="underline text-blue-600">Create an account</button></p>
+                <p>New here? <button type="button" onClick={() => { setAuthMode('signup'); setAuthError(null); }} className="underline text-blue-600 hover:text-blue-800">Create an account</button></p>
               ) : (
-                <p>Already have one? <button type="button" onClick={() => { setAuthMode('signin'); setAuthError(null); }} className="underline text-blue-600">Log in</button></p>
+                <p>Already have one? <button type="button" onClick={() => { setAuthMode('signin'); setAuthError(null); }} className="underline text-blue-600 hover:text-blue-800">Log in</button></p>
               )}
             </div>
           </div>
@@ -187,39 +187,39 @@ export default function ShareStoryModal({
         {userId && (
           <div>
             {!isTempAccount && (
-              <div className="flex items-center justify-between mb-4">
-                <p className="text-sm font-semibold text-gray-700">Signed in as {userEmail ?? 'you'}</p>
+              <div className="flex items-center justify-between mb-4 text-black">
+                <p className="text-sm font-semibold text-black">Signed in as {userEmail ?? 'you'}</p>
                 <button
                   type="button"
                   onClick={handleSignOutClick}
-                  className="text-sm font-bold underline text-gray-700 hover:text-black"
+                  className="text-sm font-bold underline text-black hover:opacity-80"
                 >
                   Sign out
                 </button>
               </div>
             )}
-            <h2 className="text-2xl font-black uppercase mb-4">Spill the Tea ☕️</h2>
+            <h2 className="text-2xl font-black uppercase mb-4 text-black">Spill the Tea ☕️</h2>
             {storySuccess && (
               <p className="mb-4 text-green-700 font-semibold">Your story was submitted. Thanks!</p>
             )}
-            <form onSubmit={handleStorySubmit} className="space-y-4">
+            <form onSubmit={handleStorySubmit} className="space-y-4 text-black">
               <div>
-                <label className="block font-bold text-xs uppercase mb-1">Your Nickname</label>
+                <label className="block font-bold text-xs uppercase mb-1 text-black">Your Nickname</label>
                 <input
                   type="text"
                   value={storyNickname}
                   onChange={(e) => setStoryNickname(e.target.value)}
-                  className="w-full p-3 border-4 border-black focus:outline-none focus:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all"
+                  className="w-full p-3 border-4 border-black text-black placeholder:text-gray-500 focus:outline-none focus:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all"
                   placeholder="Anonymous"
                 />
               </div>
               <div>
-                <label className="block font-bold text-xs uppercase mb-1">The Story</label>
+                <label className="block font-bold text-xs uppercase mb-1 text-black">The Story</label>
                 <textarea
                   rows={5}
                   value={storyText}
                   onChange={(e) => setStoryText(e.target.value)}
-                  className="w-full p-3 border-4 border-black focus:outline-none focus:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all resize-none"
+                  className="w-full p-3 border-4 border-black text-black placeholder:text-gray-500 focus:outline-none focus:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all resize-none"
                   placeholder="So we went to dinner and..."
                   maxLength={3000}
                 />
@@ -238,7 +238,7 @@ export default function ShareStoryModal({
         )}
 
         {!userId && (
-          <p className="text-center text-gray-500">Loading…</p>
+          <p className="text-center text-black">Loading…</p>
         )}
       </div>
     </div>
