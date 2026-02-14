@@ -4,7 +4,7 @@ import { motion, useMotionValue, useTransform, PanInfo } from 'framer-motion';
 import { useState, useRef } from 'react';
 
 interface Story {
-  id: number;
+  id: string | number;
   content: string;
   nickname: string;
 }

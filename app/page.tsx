@@ -1,32 +1,150 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import StoryCard from '@/components/StoryCard';
 import ShareStoryModal from '@/components/ShareStoryModal';
 import StoryDetailModal from '@/components/StoryDetailModal';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { RefreshCcw, MessageCirclePlus } from 'lucide-react';
+import { getOrCreateCookieId, clearCookieId } from '@/lib/auth';
 
-const MOCK_STORIES = [
-  { id: 1, content: "He brought his mom to our first date. She ordered for him.", nickname: "MommasBoy_Run" },
-  { id: 2, content: "She spent 20 minutes explaining why the earth is flat. We were at a planetarium.", nickname: "ScienceGuy" },
-  { id: 3, content: "He forgot his wallet, so I paid. Then he asked for the receipt to expense it.", nickname: "CorporateGreed" },
-];
+export type AppStory = { id: string; content: string; nickname: string };
+
+function mapApiStoryToApp(data: { storyId: string; text: string; storyName?: string | null }): AppStory {
+  return {
+    id: data.storyId,
+    content: data.text,
+    nickname: data.storyName ?? 'Anonymous',
+  };
+}
 
 export default function Home() {
-  const [stories, setStories] = useState(MOCK_STORIES);
-  const [activeStory, setActiveStory] = useState(MOCK_STORIES[0]);
+  const [activeStory, setActiveStory] = useState<AppStory | null>(null);
+  const [nextStory, setNextStory] = useState<AppStory | null>(null);
+  const [storyLoading, setStoryLoading] = useState(false);
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const [isStoryDetailOpen, setIsStoryDetailOpen] = useState(false);
+  const lastPrefetchIdRef = useRef<string | null>(null);
+
+  const [userId, setUserId] = useState<string | null>(null);
+  const [isTempAccount, setIsTempAccount] = useState(true);
+  const [userEmail, setUserEmail] = useState<string | null>(null);
+  const [authLoading, setAuthLoading] = useState(true);
+  const [cookieId, setCookieId] = useState<string>('');
+
+  useEffect(() => {
+    const cid = getOrCreateCookieId();
+    setCookieId(cid);
+    if (!cid) {
+      setAuthLoading(false);
+      return;
+    }
+    fetch('/api/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ cookieId: cid }),
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success && data.userId) {
+          setUserId(data.userId);
+          setIsTempAccount(data.isTempAccount ?? true);
+        }
+      })
+      .finally(() => setAuthLoading(false));
+  }, []);
+
+  const handleLoginSuccess = (params: { userId: string; isTempAccount: boolean; userEmail?: string | null }) => {
+    setUserId(params.userId);
+    setIsTempAccount(params.isTempAccount);
+    setUserEmail(params.userEmail ?? null);
+  };
+
+  const handleSignOut = () => {
+    clearCookieId();
+    setUserId(null);
+    setIsTempAccount(true);
+    setUserEmail(null);
+    setActiveStory(null);
+    const cookieId = getOrCreateCookieId();
+    if (cookieId) {
+      fetch('/api/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ cookieId }),
+      })
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.success && data.userId) {
+            setUserId(data.userId);
+            setIsTempAccount(true);
+            fetchNextStory(data.userId);
+          }
+        });
+    }
+  };
+
+  const fetchNextStory = async (
+    uid: string,
+    options?: { excludeStoryIds?: string[]; forPreload?: boolean }
+  ) => {
+    const { excludeStoryIds, forPreload } = options ?? {};
+    if (!forPreload) setStoryLoading(true);
+    try {
+      const res = await fetch('/api/fetch', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId: uid,
+          ...(excludeStoryIds?.length ? { excludeStoryIds } : {}),
+        }),
+      });
+      const data = await res.json();
+      const story = data.success && data.hasStory && data.story ? mapApiStoryToApp(data.story) : null;
+      if (forPreload) {
+        setNextStory(story);
+      } else {
+        setActiveStory(story);
+        setNextStory(null);
+      }
+    } finally {
+      if (!forPreload) setStoryLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (userId && !authLoading) fetchNextStory(userId);
+  }, [userId, authLoading]);
+
+  // Pre-fetch next story when we have one on screen (so no loading after vote)
+  useEffect(() => {
+    if (!userId || !activeStory || nextStory !== null) return;
+    if (lastPrefetchIdRef.current === activeStory.id) return;
+    lastPrefetchIdRef.current = activeStory.id;
+    fetchNextStory(userId, { excludeStoryIds: [activeStory.id], forPreload: true });
+  }, [userId, activeStory?.id, nextStory]);
 
   const handleVote = (direction: 'left' | 'right') => {
+    const currentStory = activeStory;
+    const uid = userId;
+    const cachedNext = nextStory;
+    if (!currentStory || !uid) return;
+    const vote = direction === 'left' ? 'ive_had_worse' : 'sucks';
+    fetch('/api/vote', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ storyId: currentStory.id, userId: uid, vote }),
+    }).catch(() => {});
+    lastPrefetchIdRef.current = null;
     setTimeout(() => {
-      const nextIndex = stories.indexOf(activeStory) + 1;
-      if (nextIndex < stories.length) {
-        setActiveStory(stories[nextIndex]);
+      if (cachedNext) {
+        setActiveStory(cachedNext);
+        setNextStory(null);
+        // Pre-fetch will run from effect (activeStory changed, nextStory null)
       } else {
-        setActiveStory(null as any);
+        setActiveStory(null);
+        fetchNextStory(uid);
       }
     }, 200);
   };
@@ -38,7 +156,12 @@ export default function Home() {
            style={{ backgroundImage: 'radial-gradient(#000 1px, transparent 1px)', backgroundSize: '20px 20px' }}>
       </div>
 
-      <Header />
+      <Header
+        isTempAccount={isTempAccount}
+        authLoading={authLoading}
+        onSignInClick={() => setIsShareModalOpen(true)}
+        onSignOut={handleSignOut}
+      />
 
       <div className="flex flex-col items-center flex-1 z-10 p-4 pt-2">
         <h1 className="text-4xl sm:text-6xl font-black text-black uppercase tracking-tighter text-center mt-2 mb-2 drop-shadow-sm">
@@ -50,7 +173,11 @@ export default function Home() {
 
         {/* --- CARD AREA --- */}
       <div className="relative w-full max-w-md min-h-[280px] max-h-[38vh] z-10 flex items-center justify-center my-4 flex-shrink-0">
-        {activeStory ? (
+        {((authLoading || storyLoading) && !activeStory) ? (
+          <div className="text-center p-8 border-4 border-gray-300 rounded-xl bg-white w-full h-full flex flex-col items-center justify-center">
+            <p className="font-semibold text-gray-600">{authLoading ? 'Loading…' : 'Loading story…'}</p>
+          </div>
+        ) : activeStory ? (
           <StoryCard
             key={activeStory.id}
             story={activeStory}
@@ -60,11 +187,13 @@ export default function Home() {
         ) : (
           <div className="text-center p-8 border-4 border-gray-300 rounded-xl bg-white w-full h-full flex flex-col items-center justify-center">
             <h2 className="text-2xl font-bold uppercase mb-4">No more disasters!</h2>
+            <p className="text-sm text-gray-600 mb-4">You’ve seen everything. Check back later or share your own.</p>
             <button
-              onClick={() => { setStories(MOCK_STORIES); setActiveStory(MOCK_STORIES[0]); }}
-              className="flex items-center gap-2 px-6 py-3 bg-black text-white font-bold uppercase hover:bg-gray-800 transition-colors"
+              onClick={() => userId && fetchNextStory(userId)}
+              disabled={!userId || storyLoading}
+              className="flex items-center gap-2 px-6 py-3 bg-black text-white font-bold uppercase hover:bg-gray-800 transition-colors disabled:opacity-60"
             >
-              <RefreshCcw size={18} /> Start Over
+              <RefreshCcw size={18} /> Try again
             </button>
           </div>
         )}
@@ -92,6 +221,12 @@ export default function Home() {
       <ShareStoryModal
         isOpen={isShareModalOpen}
         onClose={() => setIsShareModalOpen(false)}
+        userId={userId}
+        isTempAccount={isTempAccount}
+        userEmail={userEmail}
+        cookieId={cookieId}
+        onLoginSuccess={handleLoginSuccess}
+        onSignOut={handleSignOut}
       />
       <StoryDetailModal
         isOpen={isStoryDetailOpen}
