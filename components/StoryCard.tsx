@@ -22,7 +22,7 @@ export default function StoryCard({ story, onVote, onCardClick }: StoryCardProps
   const x = useMotionValue(0);
   const rotate = useTransform(x, [-200, 200], [-25, 25]);
   const opacity = useTransform(x, [-200, -150, 0, 150, 200], [0, 1, 1, 1, 0]);
-  const bg = useTransform(x, [-200, 0, 200], ["#f87171", "#ffffff", "#4ade80"]);
+  const bg = useTransform(x, [-200, 0, 200], ["#ef4444", "#ffffff", "#eab308"]);
 
   const handleDragEnd = (_event: unknown, info: PanInfo) => {
     if (Math.abs(info.offset.x) > 10) didDrag.current = true;
@@ -62,11 +62,6 @@ export default function StoryCard({ story, onVote, onCardClick }: StoryCardProps
         <p className="text-sm font-black tracking-widest uppercase text-gray-700">
           — {story.nickname}
         </p>
-
-        <div className="flex justify-between mt-6 text-xs font-bold uppercase text-gray-800">
-          <span className="text-red-600">I've Had Worse</span>
-          <span className="text-green-600">That's Bad</span>
-        </div>
       </div>
     </motion.div>
   );

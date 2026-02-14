@@ -6,14 +6,14 @@ import Image from 'next/image';
 export default function Header() {
   return (
     <header className="sticky top-0 z-20 w-full bg-yellow-50/95 backdrop-blur supports-[backdrop-filter]:bg-yellow-50/80">
-      <div className="mx-auto flex h-16 max-w-4xl items-center justify-between px-3 py-1">
+      <div className="mx-auto flex h-24 sm:h-28 max-w-4xl items-center justify-between px-3 py-2">
         <Link href="/" className="flex items-center focus:outline-none focus:ring-2 focus:ring-black focus:ring-offset-2 rounded -my-1">
           <Image
             src="/ive-hard-worse-logo-transparent.png"
             alt="I've Had Worse"
-            width={320}
-            height={96}
-            className="h-16 w-auto object-contain sm:h-20"
+            width={400}
+            height={140}
+            className="h-20 w-auto object-contain sm:h-24"
             priority
           />
         </Link>

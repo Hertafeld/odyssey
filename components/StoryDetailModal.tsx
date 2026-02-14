@@ -54,15 +54,21 @@ export default function StoryDetailModal({ isOpen, story, onClose, onVote }: Sto
         <div className="flex gap-4">
           <button
             onClick={() => handleVote('left')}
-            className="flex-1 py-3 px-4 border-2 border-red-700 bg-red-50 font-black uppercase text-sm text-red-900 hover:bg-red-100 transition-colors rounded-lg"
+            className="group relative flex-1"
           >
-            I've Had Worse
+            <div className="absolute top-0 left-0 w-full h-full bg-black rounded-lg translate-x-1 translate-y-1" />
+            <div className="relative bg-white border-4 border-red-500 py-3 px-4 rounded-lg flex items-center justify-center font-black uppercase tracking-wider text-red-800 hover:bg-red-50 active:translate-x-1 active:translate-y-1 transition-all">
+              I've Had Worse
+            </div>
           </button>
           <button
             onClick={() => handleVote('right')}
-            className="flex-1 py-3 px-4 border-2 border-green-700 bg-green-50 font-black uppercase text-sm text-green-900 hover:bg-green-100 transition-colors rounded-lg"
+            className="group relative flex-1"
           >
-            That's Bad
+            <div className="absolute top-0 left-0 w-full h-full bg-black rounded-lg translate-x-1 translate-y-1" />
+            <div className="relative bg-white border-4 border-yellow-500 py-3 px-4 rounded-lg flex items-center justify-center font-black uppercase tracking-wider text-yellow-800 hover:bg-yellow-50 active:translate-x-1 active:translate-y-1 transition-all">
+              That's Bad
+            </div>
           </button>
         </div>
       </div>

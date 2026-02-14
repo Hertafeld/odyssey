@@ -48,8 +48,14 @@ export default function Home() {
           Swipe through the worst dates humanity has to offer.
         </p>
 
-        {/* --- CARD AREA --- */}
-      <div className="relative w-full max-w-md min-h-[280px] max-h-[38vh] z-10 flex items-center justify-center my-4 flex-shrink-0">
+        {/* --- CARD AREA (with swipe labels on the sides) --- */}
+      <div className="w-full max-w-2xl flex items-center justify-center gap-3 sm:gap-6 my-4 flex-shrink-0 z-10">
+        {activeStory && (
+          <span className="text-red-600 font-black uppercase tracking-wider text-xs sm:text-sm flex-shrink-0 text-center w-14 sm:w-20 leading-tight">
+            I've Had Worse
+          </span>
+        )}
+      <div className="relative w-full max-w-md min-h-[280px] max-h-[38vh] flex items-center justify-center flex-shrink-0">
         {activeStory ? (
           <StoryCard
             key={activeStory.id}
@@ -69,6 +75,36 @@ export default function Home() {
           </div>
         )}
       </div>
+        {activeStory && (
+          <span className="text-yellow-600 font-black uppercase tracking-wider text-xs sm:text-sm flex-shrink-0 text-center w-14 sm:w-20 leading-tight">
+            That's Bad
+          </span>
+        )}
+      </div>
+
+        {/* --- Vote buttons --- */}
+        {activeStory && (
+          <div className="flex gap-4 w-full max-w-md justify-center flex-shrink-0 mt-2">
+            <button
+              onClick={() => handleVote('left')}
+              className="group relative flex-1 max-w-[200px]"
+            >
+              <div className="absolute top-0 left-0 w-full h-full bg-black rounded-lg translate-x-1 translate-y-1" />
+              <div className="relative bg-white border-4 border-red-500 py-3 px-4 rounded-lg flex items-center justify-center font-black uppercase tracking-wider text-red-800 hover:bg-red-50 active:translate-x-1 active:translate-y-1 transition-all">
+                I've Had Worse
+              </div>
+            </button>
+            <button
+              onClick={() => handleVote('right')}
+              className="group relative flex-1 max-w-[200px]"
+            >
+              <div className="absolute top-0 left-0 w-full h-full bg-black rounded-lg translate-x-1 translate-y-1" />
+              <div className="relative bg-white border-4 border-yellow-500 py-3 px-4 rounded-lg flex items-center justify-center font-black uppercase tracking-wider text-yellow-800 hover:bg-yellow-50 active:translate-x-1 active:translate-y-1 transition-all">
+                That's Bad
+              </div>
+            </button>
+          </div>
+        )}
 
         {/* --- Share --- */}
         <div className="z-10 w-full max-w-md flex flex-col items-center gap-6 mb-8 mt-6 flex-shrink-0">
