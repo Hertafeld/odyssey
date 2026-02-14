@@ -1,27 +1,7 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import Link from 'next/link';
-
-// 15 Feb 2026, 11:00 Amsterdam (CET = UTC+1 in February)
-const TARGET = new Date('2026-02-15T11:00:00+01:00').getTime();
-
-function useCountdown() {
-  const [now, setNow] = useState(() => Date.now());
-
-  useEffect(() => {
-    const id = setInterval(() => setNow(Date.now()), 1000);
-    return () => clearInterval(id);
-  }, []);
-
-  const diff = Math.max(0, TARGET - now);
-  const days = Math.floor(diff / 86_400_000);
-  const hours = Math.floor((diff % 86_400_000) / 3_600_000);
-  const minutes = Math.floor((diff % 3_600_000) / 60_000);
-  const seconds = Math.floor((diff % 60_000) / 1_000);
-
-  return { days, hours, minutes, seconds, done: diff === 0 };
-}
 
 export interface HeaderProps {
   isTempAccount: boolean;
@@ -36,45 +16,19 @@ export default function Header({
   onSignInClick,
   onSignOut,
 }: HeaderProps) {
-  const { days, hours, minutes, seconds, done } = useCountdown();
-  const [mounted, setMounted] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
-  useEffect(() => setMounted(true), []);
-
-  const pad = (n: number) => String(n).padStart(2, '0');
 
   return (
     <header className="sticky top-0 z-20 w-full bg-yellow-50/95 backdrop-blur supports-[backdrop-filter]:bg-yellow-50/80">
-      <div className="mx-auto flex h-16 sm:h-28 max-w-4xl items-center justify-between px-3 py-2">
-        <Link href="/" className="flex items-center focus:outline-none focus:ring-2 focus:ring-black focus:ring-offset-2 rounded -my-1">
+      <div className="mx-auto flex h-14 sm:h-16 max-w-4xl items-center justify-between px-3 py-2">
+        <Link href="/" className="flex flex-col justify-center focus:outline-none focus:ring-2 focus:ring-black focus:ring-offset-2 rounded -my-1">
           <span className="text-base sm:text-lg font-black text-black uppercase tracking-tighter">
             I've Had Worse
           </span>
+          <span className="text-[10px] sm:text-xs font-semibold text-gray-500 tracking-tight">
+            Swipe through the worst dates.
+          </span>
         </Link>
-
-        {/* Countdown */}
-        <div className="flex flex-col items-center">
-          {mounted && !done ? (
-            <>
-              <span className="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-gray-500">
-                Voting closes in
-              </span>
-              <div className="flex items-center gap-1 sm:gap-2 font-black text-black tabular-nums text-sm sm:text-lg">
-                <span>{pad(days)}</span>
-                <span className="text-gray-300">:</span>
-                <span>{pad(hours)}</span>
-                <span className="text-gray-300">:</span>
-                <span>{pad(minutes)}</span>
-                <span className="text-gray-300">:</span>
-                <span>{pad(seconds)}</span>
-              </div>
-            </>
-          ) : mounted ? (
-            <span className="text-sm sm:text-base font-black uppercase tracking-wider text-black">
-              Voting Closed!
-            </span>
-          ) : null}
-        </div>
 
         {/* Desktop nav */}
         <nav className="hidden sm:flex items-center gap-4">

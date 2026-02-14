@@ -9,6 +9,7 @@ import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { RefreshCcw, MessageCirclePlus } from 'lucide-react';
 import { getOrCreateCookieId, clearCookieId } from '@/lib/auth';
+import { useCountdown } from '@/lib/useCountdown';
 
 export type AppStory = { id: string; content: string; nickname: string };
 
@@ -28,11 +29,18 @@ export default function Home() {
   const [isStoryDetailOpen, setIsStoryDetailOpen] = useState(false);
   const lastPrefetchIdRef = useRef<string | null>(null);
 
+  const { days, hours, minutes, seconds, done: countdownDone } = useCountdown();
+  const [mounted, setMounted] = useState(false);
+
   const [userId, setUserId] = useState<string | null>(null);
   const [isTempAccount, setIsTempAccount] = useState(true);
   const [userEmail, setUserEmail] = useState<string | null>(null);
   const [authLoading, setAuthLoading] = useState(true);
   const [cookieId, setCookieId] = useState<string>('');
+
+  useEffect(() => setMounted(true), []);
+
+  const pad = (n: number) => String(n).padStart(2, '0');
 
   useEffect(() => {
     const cid = getOrCreateCookieId();
@@ -153,10 +161,10 @@ export default function Home() {
 
   return (
     <main className="flex min-h-screen flex-col bg-yellow-50 overflow-hidden relative">
-      {/* Background decoration */}
-      <div className="absolute inset-0 z-0 opacity-10 pointer-events-none"
-           style={{ backgroundImage: 'radial-gradient(#000 1px, transparent 1px)', backgroundSize: '20px 20px' }}>
-      </div>
+      <div
+        className="absolute inset-0 z-0 opacity-10 pointer-events-none"
+        style={{ backgroundImage: 'radial-gradient(#000 1px, transparent 1px)', backgroundSize: '20px 20px' }}
+      />
 
       <Header
         isTempAccount={isTempAccount}
@@ -166,7 +174,7 @@ export default function Home() {
       />
 
       <div className="flex flex-col items-center flex-1 z-10 p-4 pt-0">
-        <div className="mt-0 mb-0 flex justify-center">
+        <div className="mt-0 mb-4 flex justify-center">
           <Image
             src="/ive-hard-worse-logo-transparent.png"
             alt="I've Had Worse"
@@ -176,18 +184,39 @@ export default function Home() {
             priority
           />
         </div>
-        <p className="text-lg sm:text-xl font-semibold text-black text-center mb-12 max-w-md">
-          Swipe through the worst dates.
-        </p>
 
-        {/* --- CARD AREA (with swipe labels on the sides) --- */}
-      <div className="w-full max-w-2xl flex items-center justify-center gap-3 sm:gap-6 my-4 flex-shrink-0 z-10">
-        {activeStory && (
-          <span className="text-red-600 font-black uppercase tracking-wider text-xs sm:text-sm flex-shrink-0 text-center w-14 sm:w-20 leading-tight">
-            I've Had Worse
-          </span>
-        )}
-      <div className="relative w-full max-w-md min-h-[280px] max-h-[38vh] flex items-center justify-center flex-shrink-0">
+        {/* Countdown */}
+        <div className="flex flex-col items-center mb-2">
+          {mounted && !countdownDone ? (
+            <>
+              <span className="text-xs sm:text-sm font-bold uppercase tracking-wider text-gray-500">
+                Voting closes in
+              </span>
+              <div className="flex items-center gap-1.5 sm:gap-2 font-black text-black tabular-nums text-lg sm:text-2xl">
+                <span>{pad(days)}</span>
+                <span className="text-gray-300">:</span>
+                <span>{pad(hours)}</span>
+                <span className="text-gray-300">:</span>
+                <span>{pad(minutes)}</span>
+                <span className="text-gray-300">:</span>
+                <span>{pad(seconds)}</span>
+              </div>
+            </>
+          ) : mounted ? (
+            <span className="text-lg sm:text-xl font-black uppercase tracking-wider text-black">
+              Voting Closed!
+            </span>
+          ) : null}
+        </div>
+
+        {/* Card area with swipe labels */}
+        <div className="w-full max-w-2xl flex items-center justify-center gap-3 sm:gap-6 my-4 flex-shrink-0 z-10">
+          {activeStory && (
+            <span className="text-red-600 font-black uppercase tracking-wider text-xs sm:text-sm flex-shrink-0 text-center w-14 sm:w-20 leading-tight">
+              I've Had Worse
+            </span>
+          )}
+          <div className="relative w-full max-w-md min-h-[280px] max-h-[38vh] flex items-center justify-center flex-shrink-0">
         {activeStory ? (
           <StoryCard
             key={activeStory.id}
@@ -208,56 +237,54 @@ export default function Home() {
             </button>
           </div>
         )}
-      </div>
-        {activeStory && (
-          <span className="text-yellow-600 font-black uppercase tracking-wider text-xs sm:text-sm flex-shrink-0 text-center w-14 sm:w-20 leading-tight">
-            That's Bad
-          </span>
-        )}
-      </div>
+          </div>
+          {activeStory && (
+            <span className="text-yellow-600 font-black uppercase tracking-wider text-xs sm:text-sm flex-shrink-0 text-center w-14 sm:w-20 leading-tight">
+              That's Bad
+            </span>
+          )}
+        </div>
 
-        {/* --- Vote buttons --- */}
+        {/* Vote buttons */}
         {activeStory && (
-          <div className="flex gap-4 w-full max-w-md justify-center flex-shrink-0 mt-2">
+          <div className="flex gap-3 sm:gap-4 w-full max-w-md justify-center flex-shrink-0 mt-2 px-2">
             <button
               onClick={() => handleVote('left')}
-              className="group relative flex-1 max-w-[200px]"
+              className="group relative flex-1"
             >
               <div className="absolute top-0 left-0 w-full h-full bg-black rounded-lg translate-x-1 translate-y-1" />
-              <div className="relative bg-white border-4 border-red-500 py-3 px-4 rounded-lg flex items-center justify-center font-black uppercase tracking-wider text-red-800 hover:bg-red-50 active:translate-x-1 active:translate-y-1 transition-all">
+              <div className="relative bg-white border-2 sm:border-4 border-red-500 py-2.5 px-3 sm:py-3 sm:px-4 rounded-lg flex items-center justify-center font-black uppercase whitespace-nowrap text-xs sm:text-base tracking-tight sm:tracking-wider text-red-800 hover:bg-red-50 active:translate-x-1 active:translate-y-1 transition-all">
                 I've Had Worse
               </div>
             </button>
             <button
               onClick={() => handleVote('right')}
-              className="group relative flex-1 max-w-[200px]"
+              className="group relative flex-1"
             >
               <div className="absolute top-0 left-0 w-full h-full bg-black rounded-lg translate-x-1 translate-y-1" />
-              <div className="relative bg-white border-4 border-yellow-500 py-3 px-4 rounded-lg flex items-center justify-center font-black uppercase tracking-wider text-yellow-800 hover:bg-yellow-50 active:translate-x-1 active:translate-y-1 transition-all">
+              <div className="relative bg-white border-2 sm:border-4 border-yellow-500 py-2.5 px-3 sm:py-3 sm:px-4 rounded-lg flex items-center justify-center font-black uppercase whitespace-nowrap text-xs sm:text-base tracking-tight sm:tracking-wider text-yellow-800 hover:bg-yellow-50 active:translate-x-1 active:translate-y-1 transition-all">
                 That's Bad
               </div>
             </button>
           </div>
         )}
 
-        {/* --- Share --- */}
+        {/* Share button */}
         <div className="z-10 w-full max-w-md flex flex-col items-center gap-6 mb-8 mt-6 flex-shrink-0">
-
-        {/* --- SHARE BUTTON --- */}
-        <button
-          onClick={() => setIsShareModalOpen(true)}
-          className="group relative w-full"
-        >
-          <div className="absolute top-0 left-0 w-full h-full bg-black rounded-lg translate-x-1 translate-y-1"></div>
-          <div className="relative bg-white border-4 border-black p-4 rounded-lg flex items-center justify-center gap-3 active:translate-x-1 active:translate-y-1 transition-all">
-            <MessageCirclePlus className="w-6 h-6" />
-            <span className="font-black uppercase tracking-wider text-lg">Share Your Story</span>
-          </div>
-        </button>
+          <button
+            onClick={() => setIsShareModalOpen(true)}
+            className="group relative w-full"
+          >
+            <div className="absolute top-0 left-0 w-full h-full bg-black rounded-lg translate-x-1 translate-y-1" />
+            <div className="relative bg-white border-4 border-black p-4 rounded-lg flex items-center justify-center gap-3 active:translate-x-1 active:translate-y-1 transition-all">
+              <MessageCirclePlus className="w-6 h-6" />
+              <span className="font-black uppercase tracking-wider text-lg">Share Your Story</span>
+            </div>
+          </button>
         </div>
       </div>
 
-      {/* --- About Section --- */}
+      {/* About section */}
       <section className="w-full bg-yellow-100 border-t border-yellow-200 z-10">
         <div className="mx-auto max-w-2xl px-6 py-12 text-center">
           <h2 className="text-2xl sm:text-3xl font-black uppercase tracking-tighter text-black mb-4">

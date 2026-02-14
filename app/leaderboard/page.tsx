@@ -5,7 +5,9 @@ import Link from 'next/link';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import ShareStoryModal from '@/components/ShareStoryModal';
+import StoryDetailModal from '@/components/StoryDetailModal';
 import { getOrCreateCookieId, clearCookieId } from '@/lib/auth';
+import { useCountdown } from '@/lib/useCountdown';
 
 interface LeaderboardEntry {
   rank: number;
@@ -13,13 +15,17 @@ interface LeaderboardEntry {
   text: string;
   storyName: string | null;
   thatsBadCount: number;
+  hasVoted: boolean;
 }
 
 export default function LeaderboardPage() {
+  const { days, hours, minutes, seconds, done: countdownDone } = useCountdown();
+  const [mounted, setMounted] = useState(false);
   const [entries, setEntries] = useState<LeaderboardEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [selectedStory, setSelectedStory] = useState<LeaderboardEntry | null>(null);
+  const [votedIds, setVotedIds] = useState<Set<string>>(new Set());
 
   const [userId, setUserId] = useState<string | null>(null);
   const [isTempAccount, setIsTempAccount] = useState(true);
@@ -27,6 +33,9 @@ export default function LeaderboardPage() {
   const [authLoading, setAuthLoading] = useState(true);
   const [cookieId, setCookieId] = useState<string>('');
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+
+  useEffect(() => setMounted(true), []);
+  const pad = (n: number) => String(n).padStart(2, '0');
 
   useEffect(() => {
     const cid = getOrCreateCookieId();
@@ -75,11 +84,23 @@ export default function LeaderboardPage() {
     }
   };
 
+  const handleVote = (direction: 'left' | 'right') => {
+    if (!selectedStory || !userId) return;
+    const vote = direction === 'left' ? 'ive_had_worse' : 'sucks';
+    fetch('/api/vote', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ storyId: selectedStory.storyId, userId, vote }),
+    }).catch(() => {});
+    setVotedIds((prev) => new Set(prev).add(selectedStory.storyId));
+  };
+
   useEffect(() => {
     let cancelled = false;
     async function fetchLeaderboard() {
       try {
-        const res = await fetch('/api/leaderboard');
+        const url = userId ? `/api/leaderboard?userId=${userId}` : '/api/leaderboard';
+        const res = await fetch(url);
         const json = await res.json();
         if (cancelled) return;
         if (!res.ok) {
@@ -87,7 +108,9 @@ export default function LeaderboardPage() {
           setEntries([]);
           return;
         }
-        setEntries(json.entries ?? []);
+        const fetchedEntries: LeaderboardEntry[] = json.entries ?? [];
+        setEntries(fetchedEntries);
+        setVotedIds(new Set(fetchedEntries.filter((e) => e.hasVoted).map((e) => e.storyId)));
         setError(null);
       } catch {
         if (!cancelled) {
@@ -100,7 +123,7 @@ export default function LeaderboardPage() {
     }
     fetchLeaderboard();
     return () => { cancelled = true; };
-  }, []);
+  }, [userId]);
 
   return (
     <main className="flex min-h-screen flex-col bg-yellow-50 overflow-hidden relative">
@@ -133,9 +156,33 @@ export default function LeaderboardPage() {
         <h1 className="text-3xl sm:text-4xl font-black text-black uppercase tracking-tighter text-center mb-2">
           Leaderboard
         </h1>
-        <p className="text-base font-semibold text-black text-center mb-8 max-w-md">
-          The worst of the worst - ranked by you.
+        <p className="text-base font-semibold text-black text-center mb-4 max-w-md">
+          The worst of the worst — ranked by you.
         </p>
+
+        {/* Countdown */}
+        <div className="flex flex-col items-center mb-6">
+          {mounted && !countdownDone ? (
+            <>
+              <span className="text-xs sm:text-sm font-bold uppercase tracking-wider text-gray-500">
+                Voting closes in
+              </span>
+              <div className="flex items-center gap-1.5 sm:gap-2 font-black text-black tabular-nums text-lg sm:text-2xl">
+                <span>{pad(days)}</span>
+                <span className="text-gray-300">:</span>
+                <span>{pad(hours)}</span>
+                <span className="text-gray-300">:</span>
+                <span>{pad(minutes)}</span>
+                <span className="text-gray-300">:</span>
+                <span>{pad(seconds)}</span>
+              </div>
+            </>
+          ) : mounted ? (
+            <span className="text-lg sm:text-xl font-black uppercase tracking-wider text-black">
+              Voting Closed!
+            </span>
+          ) : null}
+        </div>
 
         <div className="w-full max-w-2xl">
           {loading && (
@@ -168,10 +215,12 @@ export default function LeaderboardPage() {
             <ul className="space-y-3">
               {entries.map((entry) => (
                 <li key={entry.storyId}>
-                  <button
-                    type="button"
-                    onClick={() => setExpandedId(expandedId === entry.storyId ? null : entry.storyId)}
-                    className="w-full text-left bg-white border-4 border-black shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] rounded-xl p-4 flex flex-col sm:flex-row sm:items-center gap-3 hover:bg-yellow-50 active:translate-x-[2px] active:translate-y-[2px] active:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all cursor-pointer"
+                  <div
+                    role="button"
+                    tabIndex={0}
+                    onClick={() => setSelectedStory(entry)}
+                    onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setSelectedStory(entry); }}}
+                    className="w-full text-left bg-white border-4 border-black shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] rounded-xl p-4 flex flex-col sm:flex-row sm:items-start gap-3 hover:bg-yellow-50 transition-colors cursor-pointer"
                   >
                     <div className="flex items-center gap-3 flex-shrink-0">
                       <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-black text-white font-black text-lg">
@@ -182,7 +231,7 @@ export default function LeaderboardPage() {
                       </span>
                     </div>
                     <div className="min-w-0 flex-1">
-                      <p className={`font-medium italic text-gray-900 leading-snug ${expandedId === entry.storyId ? '' : 'line-clamp-2'}`}>
+                      <p className="font-medium italic text-gray-900 leading-snug line-clamp-2">
                         <span className="text-2xl font-serif leading-none text-gray-300 mr-0.5">&ldquo;</span>{entry.text}<span className="text-2xl font-serif leading-none text-gray-300 ml-0.5">&rdquo;</span>
                       </p>
                       {entry.storyName && (
@@ -191,7 +240,7 @@ export default function LeaderboardPage() {
                         </p>
                       )}
                     </div>
-                  </button>
+                  </div>
                 </li>
               ))}
             </ul>
@@ -210,6 +259,12 @@ export default function LeaderboardPage() {
         cookieId={cookieId}
         onLoginSuccess={handleLoginSuccess}
         onSignOut={handleSignOut}
+      />
+      <StoryDetailModal
+        isOpen={!!selectedStory}
+        story={selectedStory ? { id: selectedStory.storyId, content: selectedStory.text, nickname: selectedStory.storyName ?? 'Anonymous' } : null}
+        onClose={() => setSelectedStory(null)}
+        onVote={selectedStory && !votedIds.has(selectedStory.storyId) ? handleVote : undefined}
       />
     </main>
   );
