@@ -1,65 +1,93 @@
-import Image from "next/image";
+'use client';
+
+import { useState } from 'react';
+import StoryCard from '@/components/StoryCard';
+import ShareStoryModal from '@/components/ShareStoryModal'; // Import the new modal
+import { RefreshCcw, MessageCirclePlus } from 'lucide-react';
+
+const MOCK_STORIES = [
+  { id: 1, content: "He brought his mom to our first date. She ordered for him.", nickname: "MommasBoy_Run" },
+  { id: 2, content: "She spent 20 minutes explaining why the earth is flat. We were at a planetarium.", nickname: "ScienceGuy" },
+  { id: 3, content: "He forgot his wallet, so I paid. Then he asked for the receipt to expense it.", nickname: "CorporateGreed" },
+];
 
 export default function Home() {
+  const [stories, setStories] = useState(MOCK_STORIES);
+  const [activeStory, setActiveStory] = useState(MOCK_STORIES[0]);
+  const [isShareModalOpen, setIsShareModalOpen] = useState(false); // State for modal
+
+  const handleVote = (direction: 'left' | 'right') => {
+    setTimeout(() => {
+      const nextIndex = stories.indexOf(activeStory) + 1;
+      if (nextIndex < stories.length) {
+        setActiveStory(stories[nextIndex]);
+      } else {
+        setActiveStory(null as any);
+      }
+    }, 200);
+  };
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
+    <main className="flex min-h-screen flex-col items-center justify-between bg-yellow-50 overflow-hidden relative p-4">
+      {/* Background decoration */}
+      <div className="absolute inset-0 z-0 opacity-10 pointer-events-none"
+           style={{ backgroundImage: 'radial-gradient(#000 1px, transparent 1px)', backgroundSize: '20px 20px' }}>
+      </div>
+
+      {/* --- HEADER (Placeholder for Logo & Timer - We will do this in Phase 4) --- */}
+      <div className="z-10 mt-8 text-center h-20">
+        <h1 className="text-4xl font-black uppercase tracking-tighter">I've Had Worse</h1>
+      </div>
+
+      {/* --- CARD AREA --- */}
+      <div className="relative w-full max-w-sm h-[50vh] z-10 flex items-center justify-center my-4">
+        {activeStory ? (
+          <StoryCard
+            key={activeStory.id}
+            story={activeStory}
+            onVote={handleVote}
+          />
+        ) : (
+          <div className="text-center p-8 border-4 border-gray-300 rounded-xl bg-white w-full h-full flex flex-col items-center justify-center">
+            <h2 className="text-2xl font-bold uppercase mb-4">No more disasters!</h2>
+            <button
+              onClick={() => { setStories(MOCK_STORIES); setActiveStory(MOCK_STORIES[0]); }}
+              className="flex items-center gap-2 px-6 py-3 bg-black text-white font-bold uppercase hover:bg-gray-800 transition-colors"
             >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+              <RefreshCcw size={18} /> Start Over
+            </button>
+          </div>
+        )}
+      </div>
+
+      {/* --- FOOTER AREA --- */}
+      <div className="z-10 w-full max-w-md flex flex-col items-center gap-6 mb-8">
+
+        {/* Placeholder for Vote Buttons (We will do this in Phase 2) */}
+        <div className="flex gap-4">
+           {/* Temporary Buttons */}
+           <div className="w-16 h-16 border-4 border-black rounded-full flex items-center justify-center bg-white">👎</div>
+           <div className="w-16 h-16 border-4 border-black rounded-full flex items-center justify-center bg-white">😬</div>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
-    </div>
+
+        {/* --- THE NEW SHARE BUTTON --- */}
+        <button
+          onClick={() => setIsShareModalOpen(true)}
+          className="group relative w-full"
+        >
+          <div className="absolute top-0 left-0 w-full h-full bg-black rounded-lg translate-x-1 translate-y-1"></div>
+          <div className="relative bg-white border-4 border-black p-4 rounded-lg flex items-center justify-center gap-3 active:translate-x-1 active:translate-y-1 transition-all">
+            <MessageCirclePlus className="w-6 h-6" />
+            <span className="font-black uppercase tracking-wider text-lg">Share Your Story</span>
+          </div>
+        </button>
+      </div>
+
+      {/* --- MODAL --- */}
+      <ShareStoryModal
+        isOpen={isShareModalOpen}
+        onClose={() => setIsShareModalOpen(false)}
+      />
+    </main>
   );
 }
