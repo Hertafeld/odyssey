@@ -5,6 +5,7 @@ import Link from 'next/link';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import ShareStoryModal from '@/components/ShareStoryModal';
+import WinnerModal from '@/components/WinnerModal';
 import StoryDetailModal from '@/components/StoryDetailModal';
 import { getOrCreateCookieId, clearCookieId, saveSession, loadSession, clearSession } from '@/lib/auth';
 import { useCountdown } from '@/lib/useCountdown';
@@ -277,6 +278,8 @@ export default function LeaderboardPage() {
       </div>
 
       <Footer />
+
+      {mounted && <WinnerModal countdownDone={countdownDone} />}
 
       <ShareStoryModal
         isOpen={modalMode !== null}

@@ -7,6 +7,7 @@ import ShareStoryModal from '@/components/ShareStoryModal';
 import StoryDetailModal from '@/components/StoryDetailModal';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
+import WinnerModal from '@/components/WinnerModal';
 import { RefreshCcw, MessageCirclePlus } from 'lucide-react';
 import { getOrCreateCookieId, clearCookieId, saveSession, loadSession, clearSession } from '@/lib/auth';
 import { useCountdown } from '@/lib/useCountdown';
@@ -328,6 +329,8 @@ export default function Home() {
       </section>
 
       <Footer />
+
+      {mounted && <WinnerModal countdownDone={countdownDone} />}
 
       <ShareStoryModal
         isOpen={shareModalMode !== null}
