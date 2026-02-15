@@ -102,7 +102,11 @@ export default function ShareStoryModal({
       });
       const data = await res.json();
       if (!data.success) {
-        setStoryError(data.error === 'text_too_long' ? 'Story is too long (max 3000 characters).' : data.error ?? 'Something went wrong.');
+        setStoryError(
+          data.error === 'text_too_long' ? 'Story is too long (max 3000 characters).'
+          : data.error === 'sign_in_required' ? 'You must be signed in to post a story.'
+          : data.error ?? 'Something went wrong.'
+        );
         return;
       }
       setStorySuccess(true);
@@ -183,8 +187,8 @@ export default function ShareStoryModal({
           </div>
         )}
 
-        {/* Submit story (always show when we have a user) */}
-        {userId && (
+        {/* Submit story (only for signed-in / non-temp users) */}
+        {userId && !isTempAccount && (
           <div>
             {!isTempAccount && (
               <div className="flex items-center justify-between mb-4 text-black">

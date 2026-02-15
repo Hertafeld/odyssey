@@ -2,8 +2,8 @@
 
 import { useState, useEffect } from 'react';
 
-// 15 Feb 2026, 11:00 Amsterdam (CET = UTC+1 in February)
-const TARGET = new Date('2026-02-15T11:00:00+01:00').getTime();
+// 15 Feb 2026, 12:35 Amsterdam (CET = UTC+1 in February)
+const TARGET = new Date('2026-02-15T12:35:00+01:00').getTime();
 
 export function useCountdown() {
   const [now, setNow] = useState(() => Date.now());

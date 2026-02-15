@@ -32,6 +32,28 @@ export async function POST(request: Request) {
     }
 
     const supabase = getSupabaseServer();
+
+    // Verify user exists and is not a temp account
+    const { data: user, error: userError } = await supabase
+      .from('users')
+      .select('id, is_temp')
+      .eq('id', userId)
+      .maybeSingle();
+
+    if (userError) throw userError;
+    if (!user) {
+      return NextResponse.json(
+        { success: false, error: 'invalid_user' },
+        { status: 400 }
+      );
+    }
+    if (user.is_temp) {
+      return NextResponse.json(
+        { success: false, error: 'sign_in_required' },
+        { status: 403 }
+      );
+    }
+
     const { data, error } = await supabase
       .from('stories')
       .insert({
