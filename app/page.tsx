@@ -253,7 +253,7 @@ export default function Home() {
               className="group relative flex-1"
             >
               <div className="absolute top-0 left-0 w-full h-full bg-black rounded-lg translate-x-1 translate-y-1" />
-              <div className="relative bg-white border-2 sm:border-4 border-red-500 py-2.5 px-3 sm:py-3 sm:px-4 rounded-lg flex items-center justify-center font-black uppercase whitespace-nowrap text-xs sm:text-base tracking-tight sm:tracking-wider text-red-800 hover:bg-red-50 active:translate-x-1 active:translate-y-1 transition-all">
+              <div className="relative bg-white border-4 border-red-500 py-2.5 px-3 sm:py-3 sm:px-4 rounded-lg flex items-center justify-center font-black uppercase whitespace-nowrap text-xs sm:text-base tracking-tight sm:tracking-wider text-red-800 hover:bg-red-50 active:translate-x-1 active:translate-y-1 transition-all">
                 I've Had Worse
               </div>
             </button>
@@ -262,7 +262,7 @@ export default function Home() {
               className="group relative flex-1"
             >
               <div className="absolute top-0 left-0 w-full h-full bg-black rounded-lg translate-x-1 translate-y-1" />
-              <div className="relative bg-white border-2 sm:border-4 border-yellow-500 py-2.5 px-3 sm:py-3 sm:px-4 rounded-lg flex items-center justify-center font-black uppercase whitespace-nowrap text-xs sm:text-base tracking-tight sm:tracking-wider text-yellow-800 hover:bg-yellow-50 active:translate-x-1 active:translate-y-1 transition-all">
+              <div className="relative bg-white border-4 border-yellow-500 py-2.5 px-3 sm:py-3 sm:px-4 rounded-lg flex items-center justify-center font-black uppercase whitespace-nowrap text-xs sm:text-base tracking-tight sm:tracking-wider text-yellow-800 hover:bg-yellow-50 active:translate-x-1 active:translate-y-1 transition-all">
                 That's Bad
               </div>
             </button>

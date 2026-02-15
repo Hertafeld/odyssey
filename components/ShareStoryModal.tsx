@@ -190,18 +190,9 @@ export default function ShareStoryModal({
         {/* Submit story (only for signed-in / non-temp users) */}
         {userId && !isTempAccount && (
           <div>
-            {!isTempAccount && (
-              <div className="flex items-center justify-between mb-4 text-black">
-                <p className="text-sm font-semibold text-black">Signed in as {userEmail ?? 'you'}</p>
-                <button
-                  type="button"
-                  onClick={handleSignOutClick}
-                  className="text-sm font-bold underline text-black hover:opacity-80"
-                >
-                  Sign out
-                </button>
-              </div>
-            )}
+            <div className="mb-4 text-black">
+              <p className="text-sm font-semibold text-black">Signed in as {userEmail ?? 'you'}</p>
+            </div>
             <h2 className="text-2xl font-black uppercase mb-4 text-black">Spill the Tea ☕️</h2>
             {storySuccess && (
               <p className="mb-4 text-green-700 font-semibold">Your story was submitted. Thanks!</p>

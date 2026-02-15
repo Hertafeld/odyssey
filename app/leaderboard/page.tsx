@@ -246,6 +246,22 @@ export default function LeaderboardPage() {
             </ul>
           )}
         </div>
+
+        {/* Submit your story CTA */}
+        <div className="w-full max-w-2xl mt-10 mb-4 bg-white border-4 border-black shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] rounded-xl p-6 sm:p-8 text-center">
+          <h2 className="text-xl sm:text-2xl font-black uppercase tracking-tight text-black mb-2">
+            Think your story is worse?
+          </h2>
+          <p className="text-sm sm:text-base font-medium text-gray-700 mb-4">
+            Share your Valentine&apos;s Day disaster and let people judge.
+          </p>
+          <button
+            onClick={() => setIsAuthModalOpen(true)}
+            className="inline-block px-6 py-3 bg-red-500 text-white font-black uppercase border-4 border-black hover:translate-y-1 hover:shadow-none shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all"
+          >
+            Submit Your Story
+          </button>
+        </div>
       </div>
 
       <Footer />
