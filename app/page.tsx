@@ -8,7 +8,7 @@ import StoryDetailModal from '@/components/StoryDetailModal';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { RefreshCcw, MessageCirclePlus } from 'lucide-react';
-import { getOrCreateCookieId, clearCookieId } from '@/lib/auth';
+import { getOrCreateCookieId, clearCookieId, saveSession, loadSession, clearSession } from '@/lib/auth';
 import { useCountdown } from '@/lib/useCountdown';
 
 export type AppStory = { id: string; content: string; nickname: string };
@@ -25,7 +25,7 @@ export default function Home() {
   const [activeStory, setActiveStory] = useState<AppStory | null>(null);
   const [nextStory, setNextStory] = useState<AppStory | null>(null);
   const [storyLoading, setStoryLoading] = useState(false);
-  const [isShareModalOpen, setIsShareModalOpen] = useState(false);
+  const [shareModalMode, setShareModalMode] = useState<'auth' | 'submit' | null>(null);
   const [isStoryDetailOpen, setIsStoryDetailOpen] = useState(false);
   const lastPrefetchIdRef = useRef<string | null>(null);
 
@@ -45,6 +45,17 @@ export default function Home() {
   useEffect(() => {
     const cid = getOrCreateCookieId();
     setCookieId(cid);
+
+    // Restore saved session (e.g. signed-in user navigating back)
+    const saved = loadSession();
+    if (saved && !saved.isTempAccount) {
+      setUserId(saved.userId);
+      setIsTempAccount(saved.isTempAccount);
+      setUserEmail(saved.userEmail);
+      setAuthLoading(false);
+      return;
+    }
+
     if (!cid) {
       setAuthLoading(false);
       return;
@@ -68,10 +79,12 @@ export default function Home() {
     setUserId(params.userId);
     setIsTempAccount(params.isTempAccount);
     setUserEmail(params.userEmail ?? null);
+    saveSession({ userId: params.userId, isTempAccount: params.isTempAccount, userEmail: params.userEmail ?? null });
   };
 
   const handleSignOut = () => {
     clearCookieId();
+    clearSession();
     setUserId(null);
     setIsTempAccount(true);
     setUserEmail(null);
@@ -169,7 +182,7 @@ export default function Home() {
       <Header
         isTempAccount={isTempAccount}
         authLoading={authLoading}
-        onSignInClick={() => setIsShareModalOpen(true)}
+        onSignInClick={() => setShareModalMode('auth')}
         onSignOut={handleSignOut}
       />
 
@@ -272,7 +285,7 @@ export default function Home() {
         {/* Share button */}
         <div className="z-10 w-full max-w-md flex flex-col items-center gap-6 mb-8 mt-6 flex-shrink-0">
           <button
-            onClick={() => setIsShareModalOpen(true)}
+            onClick={() => setShareModalMode('submit')}
             className="group relative w-full"
           >
             <div className="absolute top-0 left-0 w-full h-full bg-black rounded-lg translate-x-1 translate-y-1" />
@@ -317,8 +330,9 @@ export default function Home() {
       <Footer />
 
       <ShareStoryModal
-        isOpen={isShareModalOpen}
-        onClose={() => setIsShareModalOpen(false)}
+        isOpen={shareModalMode !== null}
+        mode={shareModalMode ?? 'submit'}
+        onClose={() => setShareModalMode(null)}
         userId={userId}
         isTempAccount={isTempAccount}
         userEmail={userEmail}

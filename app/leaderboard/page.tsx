@@ -6,7 +6,7 @@ import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import ShareStoryModal from '@/components/ShareStoryModal';
 import StoryDetailModal from '@/components/StoryDetailModal';
-import { getOrCreateCookieId, clearCookieId } from '@/lib/auth';
+import { getOrCreateCookieId, clearCookieId, saveSession, loadSession, clearSession } from '@/lib/auth';
 import { useCountdown } from '@/lib/useCountdown';
 
 interface LeaderboardEntry {
@@ -32,7 +32,7 @@ export default function LeaderboardPage() {
   const [userEmail, setUserEmail] = useState<string | null>(null);
   const [authLoading, setAuthLoading] = useState(true);
   const [cookieId, setCookieId] = useState<string>('');
-  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [modalMode, setModalMode] = useState<'auth' | 'submit' | null>(null);
 
   useEffect(() => setMounted(true), []);
   const pad = (n: number) => String(n).padStart(2, '0');
@@ -40,6 +40,16 @@ export default function LeaderboardPage() {
   useEffect(() => {
     const cid = getOrCreateCookieId();
     setCookieId(cid);
+
+    const saved = loadSession();
+    if (saved && !saved.isTempAccount) {
+      setUserId(saved.userId);
+      setIsTempAccount(saved.isTempAccount);
+      setUserEmail(saved.userEmail);
+      setAuthLoading(false);
+      return;
+    }
+
     if (!cid) { setAuthLoading(false); return; }
     fetch('/api/login', {
       method: 'POST',
@@ -60,10 +70,12 @@ export default function LeaderboardPage() {
     setUserId(params.userId);
     setIsTempAccount(params.isTempAccount);
     setUserEmail(params.userEmail ?? null);
+    saveSession({ userId: params.userId, isTempAccount: params.isTempAccount, userEmail: params.userEmail ?? null });
   };
 
   const handleSignOut = () => {
     clearCookieId();
+    clearSession();
     setUserId(null);
     setIsTempAccount(true);
     setUserEmail(null);
@@ -137,7 +149,7 @@ export default function LeaderboardPage() {
       <Header
         isTempAccount={isTempAccount}
         authLoading={authLoading}
-        onSignInClick={() => setIsAuthModalOpen(true)}
+        onSignInClick={() => setModalMode('auth')}
         onSignOut={handleSignOut}
       />
 
@@ -256,7 +268,7 @@ export default function LeaderboardPage() {
             Share your Valentine&apos;s Day disaster and let people judge.
           </p>
           <button
-            onClick={() => setIsAuthModalOpen(true)}
+            onClick={() => setModalMode('submit')}
             className="inline-block px-6 py-3 bg-red-500 text-white font-black uppercase border-4 border-black hover:translate-y-1 hover:shadow-none shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all"
           >
             Submit Your Story
@@ -267,8 +279,9 @@ export default function LeaderboardPage() {
       <Footer />
 
       <ShareStoryModal
-        isOpen={isAuthModalOpen}
-        onClose={() => setIsAuthModalOpen(false)}
+        isOpen={modalMode !== null}
+        mode={modalMode ?? 'submit'}
+        onClose={() => setModalMode(null)}
         userId={userId}
         isTempAccount={isTempAccount}
         userEmail={userEmail}

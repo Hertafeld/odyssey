@@ -6,6 +6,8 @@ import { X } from 'lucide-react';
 export interface ShareStoryModalProps {
   isOpen: boolean;
   onClose: () => void;
+  /** 'auth' = sign-in/sign-up only (closes after success). 'submit' = sign-in then story form. */
+  mode?: 'auth' | 'submit';
   userId: string | null;
   isTempAccount: boolean;
   userEmail: string | null;
@@ -17,6 +19,7 @@ export interface ShareStoryModalProps {
 export default function ShareStoryModal({
   isOpen,
   onClose,
+  mode = 'submit',
   userId,
   isTempAccount,
   userEmail,
@@ -68,7 +71,12 @@ export default function ShareStoryModal({
       setPassword('');
       setEmail('');
       setAuthError(null);
-      // Stay in modal; parent state update will hide auth form and show submit-story view
+      // In auth-only mode, close after successful sign-in/sign-up
+      if (mode === 'auth') {
+        onClose();
+        return;
+      }
+      // In submit mode, stay in modal so user can write their story
     } finally {
       setAuthLoading(false);
     }
@@ -121,6 +129,12 @@ export default function ShareStoryModal({
 
   if (!isOpen) return null;
 
+  // In auth-only mode, if user is already signed in, nothing to show
+  if (mode === 'auth' && userId && !isTempAccount) {
+    onClose();
+    return null;
+  }
+
   const showAuthForm = !!userId && isTempAccount;
 
   return (
@@ -141,7 +155,9 @@ export default function ShareStoryModal({
               {authMode === 'signin' ? 'Welcome Back' : 'Join the Disaster'}
             </h2>
             <p className="mb-4 font-medium text-black">
-              Create an account to save your progress, or sign in.
+              {mode === 'submit'
+                ? 'Sign in or create an account to submit your story.'
+                : 'Create an account to save your progress, or sign in.'}
             </p>
 
             <form onSubmit={handleAuthSubmit} className="space-y-4 text-left">

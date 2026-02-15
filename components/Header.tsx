@@ -38,6 +38,14 @@ export default function Header({
           >
             Leaderboard
           </Link>
+          {!authLoading && !isTempAccount && (
+            <Link
+              href="/dashboard"
+              className="text-base font-semibold text-gray-900 hover:text-black transition-colors"
+            >
+              Dashboard
+            </Link>
+          )}
           {!authLoading && (
             isTempAccount ? (
               <button
@@ -81,7 +89,7 @@ export default function Header({
 
       {/* Mobile dropdown menu */}
       <div
-        className={`sm:hidden overflow-hidden transition-all duration-200 ease-in-out ${menuOpen ? 'max-h-40 border-t border-yellow-200' : 'max-h-0'}`}
+        className={`sm:hidden overflow-hidden transition-all duration-200 ease-in-out ${menuOpen ? 'max-h-60 border-t border-yellow-200' : 'max-h-0'}`}
       >
         <nav className="mx-auto max-w-4xl flex flex-col gap-2 px-4 py-3">
           <Link
@@ -91,6 +99,15 @@ export default function Header({
           >
             Leaderboard
           </Link>
+          {!authLoading && !isTempAccount && (
+            <Link
+              href="/dashboard"
+              onClick={() => setMenuOpen(false)}
+              className="text-base font-semibold text-gray-900 hover:text-black transition-colors py-2"
+            >
+              Dashboard
+            </Link>
+          )}
           {!authLoading && (
             isTempAccount ? (
               <button
